@@ -24,6 +24,7 @@ jobs:
         run: |
           node --check app.js
           node --check admin.js
+          node --check admin-vote-confirm.js
           node --check config.js
           node --check snacks.js
 
@@ -41,7 +42,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir _site
-          cp index.html admin.html styles.css config.js snacks.js app.js admin.js _site/
+          cp index.html admin.html styles.css config.js snacks.js app.js admin.js admin-copy.css admin-vote-confirm.css admin-vote-confirm.js admin-analytics.css _site/
           touch _site/.nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
