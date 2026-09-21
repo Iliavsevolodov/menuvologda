@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./admin-copy.css?v=13" />
   <link rel="stylesheet" href="./admin-vote-confirm.css?v=1" />
+  <link rel="stylesheet" href="./admin-analytics.css?v=1" />
 </head>
 <body>
   <div class="ambient" aria-hidden="true">
@@ -36,19 +37,59 @@
       <header class="admin-head">
         <div>
           <div class="eyebrow"><i data-lucide="layout-dashboard"></i><span>Меню корпоратива</span></div>
-          <h1 class="admin-title">Результаты</h1>
+          <h1 class="admin-title">Аналитика</h1>
+          <p class="admin-subtitle">Понятная картина голосования в реальном времени</p>
         </div>
         <button id="logoutButton" class="icon-button" title="Выйти"><i data-lucide="log-out"></i></button>
       </header>
 
-      <div class="admin-grid">
-        <div class="metric"><span>Участников</span><strong id="participantsMetric">0</strong></div>
-        <div class="metric"><span>Выборов</span><strong id="selectionsMetric">0</strong></div>
-        <div class="metric"><span>В среднем</span><strong id="averageMetric">0</strong></div>
-        <div class="metric"><span>Позиций</span><strong id="positionsMetric">0</strong></div>
-      </div>
+      <section class="dashboard-block">
+        <div class="block-heading">
+          <div>
+            <span class="section-kicker">Главное</span>
+            <h2>Что происходит сейчас</h2>
+          </div>
+          <span id="updatedAt" class="live-updated">Обновляем…</span>
+        </div>
 
-      <section class="admin-section">
+        <div class="overview-grid">
+          <article class="overview-card">
+            <div class="overview-icon"><i data-lucide="users"></i></div>
+            <span>Проголосовало</span>
+            <strong id="participantsMetric">0</strong>
+            <small>человек отправили свой выбор</small>
+          </article>
+          <article class="overview-card">
+            <div class="overview-icon"><i data-lucide="mouse-pointer-click"></i></div>
+            <span>Всего отмечено</span>
+            <strong id="selectionsMetric">0</strong>
+            <small>отметок поставлено по всем закускам</small>
+          </article>
+          <article class="overview-card">
+            <div class="overview-icon"><i data-lucide="list-checks"></i></div>
+            <span>Средний выбор</span>
+            <strong><span id="averageMetric">0</span><em> / 10</em></strong>
+            <small>столько позиций выбирает один человек</small>
+          </article>
+          <article class="overview-card">
+            <div class="overview-icon"><i data-lucide="utensils"></i></div>
+            <span>Вариантов в меню</span>
+            <strong id="positionsMetric">26</strong>
+            <small>закусок участвуют в голосовании</small>
+          </article>
+        </div>
+      </section>
+
+      <section id="insightCard" class="insight-card">
+        <div class="insight-icon"><i data-lucide="sparkles"></i></div>
+        <div>
+          <span class="section-kicker">Коротко о ситуации</span>
+          <h2>Что видно по голосованию</h2>
+          <div id="insightText" class="insight-text">Собираем данные…</div>
+        </div>
+      </section>
+
+      <section class="admin-section control-section">
         <div class="section-head">
           <div>
             <span class="section-kicker">Управление</span>
@@ -56,25 +97,79 @@
           </div>
           <span id="votingStatus" class="status-pill">Проверяем…</span>
         </div>
+        <p class="section-help">Закрытие останавливает новые голоса, но не удаляет уже собранные результаты. Голосование можно вернуть в любой момент до дедлайна.</p>
         <div class="admin-actions">
           <button id="toggleVoting" class="small-button danger" type="button"><i data-lucide="lock"></i><span>Закрыть голосование</span></button>
-          <button id="refreshResults" class="small-button" type="button"><i data-lucide="refresh-cw"></i><span>Обновить</span></button>
+          <button id="refreshResults" class="small-button" type="button"><i data-lucide="refresh-cw"></i><span>Обновить данные</span></button>
         </div>
       </section>
 
-      <section class="admin-section">
+      <div class="analytics-grid">
+        <section class="admin-section analytics-card">
+          <div class="section-head">
+            <div><span class="section-kicker">Поведение участников</span><h2>Как голосуют</h2></div>
+            <i data-lucide="chart-no-axes-column-increasing"></i>
+          </div>
+          <div class="mini-metrics">
+            <div><span>Минимум</span><strong id="minSelections">—</strong><small>из 10</small></div>
+            <div><span>Медиана</span><strong id="medianSelections">—</strong><small>из 10</small></div>
+            <div><span>Максимум</span><strong id="maxSelections">—</strong><small>из 10</small></div>
+          </div>
+          <div class="split-stat">
+            <div><strong id="fullTenCount">0</strong><span>выбрали все 10</span></div>
+            <div><strong id="belowTenCount">0</strong><span>выбрали меньше 10</span></div>
+          </div>
+          <div class="subheading">Распределение выбора</div>
+          <div id="selectionDistribution" class="distribution"></div>
+        </section>
+
+        <section class="admin-section analytics-card">
+          <div class="section-head">
+            <div><span class="section-kicker">Тип подачи</span><h2>Что выбирают чаще</h2></div>
+            <i data-lucide="chart-pie"></i>
+          </div>
+          <p class="section-help compact">Категории собраны по формату закусок. Процент показывает среднюю поддержку позиций внутри категории.</p>
+          <div id="categoryResults" class="category-list"></div>
+        </section>
+      </div>
+
+      <section class="admin-section top-section">
         <div class="section-head">
-          <div><span class="section-kicker">Автоматический рейтинг</span><h2>ТОП-10 закусок</h2></div>
+          <div><span class="section-kicker">Главный рейтинг</span><h2>ТОП-10 закусок</h2></div>
           <i data-lucide="trophy"></i>
         </div>
+        <p class="section-help">В процентах показано, какая доля всех проголосовавших выбрала конкретную закуску.</p>
         <div class="admin-actions" style="margin-bottom:16px">
           <button id="copyTop10" class="small-button" type="button"><i data-lucide="copy"></i><span>Скопировать ТОП-10</span></button>
         </div>
         <div id="topResults" class="results-list"></div>
       </section>
 
+      <div class="analytics-grid">
+        <section class="admin-section analytics-card">
+          <div class="section-head">
+            <div><span class="section-kicker">Решающая зона</span><h2>Граница ТОП-10</h2></div>
+            <i data-lucide="circle-dot-dashed"></i>
+          </div>
+          <p id="boundarySummary" class="section-help compact"></p>
+          <div id="boundaryResults" class="boundary-list"></div>
+        </section>
+
+        <section class="admin-section analytics-card">
+          <div class="section-head">
+            <div><span class="section-kicker">Низ рейтинга</span><h2>Выбирают реже всего</h2></div>
+            <i data-lucide="arrow-down-to-line"></i>
+          </div>
+          <p class="section-help compact">Позиции, которые сейчас получают меньше всего поддержки.</p>
+          <div id="lowResults" class="low-list"></div>
+        </section>
+      </div>
+
       <section class="admin-section">
-        <div class="section-head"><div><span class="section-kicker">Все голоса</span><h2>Полный рейтинг</h2></div><span id="updatedAt" class="section-kicker"></span></div>
+        <div class="section-head">
+          <div><span class="section-kicker">Все варианты</span><h2>Полный рейтинг</h2></div>
+          <span class="legend-chip"><span></span>% участников</span>
+        </div>
         <div id="allResults" class="results-list"></div>
       </section>
     </section>
@@ -85,7 +180,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <script src="./config.js"></script>
-  <script src="./admin.js?v=13"></script>
+  <script src="./admin.js?v=20"></script>
   <script src="./admin-vote-confirm.js?v=1"></script>
 </body>
 </html>
