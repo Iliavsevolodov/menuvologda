@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Админка — меню корпоратива</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="noise"></div>
+  </div>
+
+  <main class="app-shell admin-shell">
+    <section id="adminLogin" class="admin-login">
+      <form id="loginForm" class="admin-login-card">
+        <div class="eyebrow"><i data-lucide="shield-check"></i><span>Закрытая зона</span></div>
+        <h1>Админка</h1>
+        <p>Введи пароль администратора, чтобы увидеть промежуточные результаты и управление голосованием.</p>
+        <label class="password-wrap">
+          <i data-lucide="key-round"></i>
+          <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Пароль" required />
+        </label>
+        <button id="loginButton" class="primary-button" type="submit"><span>Войти</span><i data-lucide="arrow-right"></i></button>
+      </form>
+    </section>
+
+    <section id="adminDashboard" class="hidden">
+      <header class="admin-head">
+        <div>
+          <div class="eyebrow"><i data-lucide="layout-dashboard"></i><span>Меню корпоратива</span></div>
+          <h1 class="admin-title">Результаты</h1>
+        </div>
+        <button id="logoutButton" class="icon-button" title="Выйти"><i data-lucide="log-out"></i></button>
+      </header>
+
+      <div class="admin-grid">
+        <div class="metric"><span>Участников</span><strong id="participantsMetric">0</strong></div>
+        <div class="metric"><span>Выборов</span><strong id="selectionsMetric">0</strong></div>
+        <div class="metric"><span>В среднем</span><strong id="averageMetric">0</strong></div>
+        <div class="metric"><span>Позиций</span><strong id="positionsMetric">0</strong></div>
+      </div>
+
+      <section class="admin-section">
+        <div class="section-head">
+          <div>
+            <span class="section-kicker">Управление</span>
+            <h2>Голосование</h2>
+          </div>
+          <span id="votingStatus" class="status-pill">Проверяем…</span>
+        </div>
+        <div class="admin-actions">
+          <button id="toggleVoting" class="small-button danger" type="button"><i data-lucide="lock"></i><span>Закрыть голосование</span></button>
+          <button id="refreshResults" class="small-button" type="button"><i data-lucide="refresh-cw"></i><span>Обновить</span></button>
+        </div>
+      </section>
+
+      <section class="admin-section">
+        <div class="section-head"><div><span class="section-kicker">Автоматический рейтинг</span><h2>ТОП-10 закусок</h2></div><i data-lucide="trophy"></i></div>
+        <div id="topResults" class="results-list"></div>
+      </section>
+
+      <section class="admin-section">
+        <div class="section-head"><div><span class="section-kicker">Все голоса</span><h2>Полный рейтинг</h2></div><span id="updatedAt" class="section-kicker"></span></div>
+        <div id="allResults" class="results-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="./config.js"></script>
+  <script src="./admin.js"></script>
+</body>
+</html>
