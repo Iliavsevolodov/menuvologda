@@ -13,6 +13,7 @@
   let adminPassword = sessionStorage.getItem("menu_admin_password") || "";
   let votingOpen = true;
   let refreshTimer = null;
+  let latestResults = [];
 
   function showToast(message, type = "") {
     toast.textContent = message;
@@ -56,13 +57,14 @@
       if (resultsError) throw resultsError;
 
       const stats = summary || {};
+      latestResults = Array.isArray(results) ? results : [];
       votingOpen = stats.is_open !== false;
       $("participantsMetric").textContent = stats.participants ?? 0;
       $("selectionsMetric").textContent = stats.total_selections ?? 0;
       $("averageMetric").textContent = Number(stats.average_selections ?? 0).toFixed(1).replace(".0", "");
-      $("positionsMetric").textContent = (results || []).length;
+      $("positionsMetric").textContent = latestResults.length;
       updateStatus();
-      renderResults(results || []);
+      renderResults(latestResults);
       $("updatedAt").textContent = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
     } catch (error) {
       console.error(error);
@@ -89,8 +91,12 @@
     window.lucide?.createIcons();
   }
 
+  function sortedResults(rows) {
+    return [...rows].sort((a, b) => Number(b.votes) - Number(a.votes) || String(a.snack_name).localeCompare(String(b.snack_name), "ru"));
+  }
+
   function renderResults(rows) {
-    const sorted = [...rows].sort((a, b) => Number(b.votes) - Number(a.votes) || String(a.snack_name).localeCompare(String(b.snack_name), "ru"));
+    const sorted = sortedResults(rows);
     const maxVotes = Math.max(1, ...sorted.map((row) => Number(row.votes || 0)));
     $("topResults").innerHTML = buildList(sorted.slice(0, 10), maxVotes, true);
     $("allResults").innerHTML = buildList(sorted, maxVotes, false);
@@ -116,6 +122,61 @@
 
   function escapeHtml(value) {
     return String(value).replace(/[&<>'"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+  }
+
+  function formatVotes(count) {
+    const n = Math.abs(Number(count)) % 100;
+    const n1 = n % 10;
+    if (n > 10 && n < 20) return "голосов";
+    if (n1 > 1 && n1 < 5) return "голоса";
+    if (n1 === 1) return "голос";
+    return "голосов";
+  }
+
+  function buildTop10Message() {
+    const top = sortedResults(latestResults).slice(0, 10);
+    if (!top.length) return "";
+
+    const lines = top.map((row, index) => {
+      const votes = Number(row.votes || 0);
+      return `${index + 1}. ${row.snack_name} — ${votes} ${formatVotes(votes)}`;
+    });
+
+    return [
+      "🏆 ТОП-10 закусок на наш корпоратив",
+      "",
+      ...lines,
+      "",
+      "Спасибо всем, кто проголосовал! 🥂"
+    ].join("\n");
+  }
+
+  async function copyTop10() {
+    const message = buildTop10Message();
+    if (!message) {
+      showToast("Пока нет результатов для копирования", "error");
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(message);
+      } else {
+        const area = document.createElement("textarea");
+        area.value = message;
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.focus();
+        area.select();
+        document.execCommand("copy");
+        area.remove();
+      }
+      showToast("ТОП-10 скопирован — можно отправлять в чат ✨");
+    } catch (error) {
+      console.error(error);
+      showToast("Не удалось скопировать сообщение", "error");
+    }
   }
 
   async function toggleVoting() {
@@ -168,6 +229,7 @@
   });
   $("refreshResults").addEventListener("click", loadData);
   $("toggleVoting").addEventListener("click", toggleVoting);
+  $("copyTop10").addEventListener("click", copyTop10);
 
   async function init() {
     window.lucide?.createIcons();
