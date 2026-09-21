@@ -167,7 +167,7 @@
   function launchConfetti() {
     if (!window.confetti || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const end = Date.now() + 1500;
-    const colors = ["#d7ff47", "#ffffff", "#7cffd4"];
+    const colors = ["#ffd21c", "#ffbd00", "#ffffff", "#17150f"];
     (function frame() {
       window.confetti({ particleCount: 4, angle: 60, spread: 60, origin: { x: 0, y: .66 }, colors });
       window.confetti({ particleCount: 4, angle: 120, spread: 60, origin: { x: 1, y: .66 }, colors });
