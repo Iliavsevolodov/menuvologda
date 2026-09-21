@@ -47,6 +47,30 @@
       line-height: 1.25;
       letter-spacing: -.03em;
     }
+    .venue-photo-wrap {
+      position: relative;
+      overflow: hidden;
+      margin: 0 0 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,190,0,.20);
+      background: #fff8dc;
+      box-shadow: 0 10px 26px rgba(88,64,0,.10);
+      aspect-ratio: 4 / 3;
+    }
+    .venue-photo {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+    .venue-photo-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 -48px 70px rgba(20,16,4,.08);
+    }
     .route-button {
       width: 100%;
       min-height: 54px;
@@ -144,6 +168,9 @@
               <span class="section-kicker">Адрес</span>
               <strong>Усадьба «Несвойское»</strong>
             </div>
+          </div>
+          <div class="venue-photo-wrap">
+            <img class="venue-photo" src="./3DF77087-9E18-48F4-8330-DEBD05AE826F.png" alt="Усадьба «Несвойское»" loading="lazy" decoding="async" />
           </div>
           <a class="route-button" href="https://yandex.ru/maps/org/usadba_nesvoyskoye/76982386058?si=115dhfh3p390d62xr8juq57gk0" target="_blank" rel="noopener noreferrer">
             <span>🧭 Маршрут до усадьбы</span>
