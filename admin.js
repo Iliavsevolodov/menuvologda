@@ -14,6 +14,8 @@
   let votingOpen = true;
   let refreshTimer = null;
   let latestResults = [];
+  let copyResetTimer = null;
+  let copySecondTimer = null;
 
   function showToast(message, type = "") {
     toast.textContent = message;
@@ -155,55 +157,130 @@
     const area = document.createElement("textarea");
     area.value = text;
     area.setAttribute("readonly", "");
-    area.style.position = "fixed";
-    area.style.top = "0";
-    area.style.left = "-9999px";
-    area.style.fontSize = "16px";
-    area.style.opacity = "1";
+    area.setAttribute("aria-hidden", "true");
+    area.style.cssText = [
+      "position:fixed",
+      "top:1px",
+      "left:1px",
+      "width:2px",
+      "height:2px",
+      "padding:0",
+      "border:0",
+      "outline:0",
+      "font-size:16px",
+      "opacity:.01",
+      "z-index:2147483647"
+    ].join(";");
     document.body.appendChild(area);
 
+    try {
+      area.focus();
+      area.select();
+      area.setSelectionRange(0, area.value.length);
+      const copied = document.execCommand("copy");
+      area.remove();
+      return Boolean(copied);
+    } catch (error) {
+      console.warn("Legacy copy failed", error);
+      area.remove();
+      return false;
+    }
+  }
+
+  function resetCopyButton() {
+    const button = $("copyTop10");
+    if (!button) return;
+    clearTimeout(copyResetTimer);
+    clearInterval(copySecondTimer);
+    button.disabled = false;
+    button.classList.remove("copied");
+    button.innerHTML = '<i data-lucide="copy"></i><span>Скопировать ТОП-10</span>';
+    window.lucide?.createIcons();
+  }
+
+  function showCopySuccess() {
+    const button = $("copyTop10");
+    if (!button) return;
+
+    clearTimeout(copyResetTimer);
+    clearInterval(copySecondTimer);
+    button.disabled = true;
+    button.classList.add("copied");
+    button.innerHTML = `
+      <span class="copy-check" aria-hidden="true">✓</span>
+      <span>Скопировано</span>
+      <span class="copy-timer" aria-hidden="true">
+        <svg viewBox="0 0 28 28">
+          <circle class="copy-timer-track" cx="14" cy="14" r="11"></circle>
+          <circle class="copy-timer-progress" cx="14" cy="14" r="11"></circle>
+        </svg>
+        <span class="copy-seconds">3</span>
+      </span>`;
+
+    let seconds = 3;
+    copySecondTimer = setInterval(() => {
+      seconds -= 1;
+      const label = button.querySelector(".copy-seconds");
+      if (label && seconds > 0) label.textContent = String(seconds);
+    }, 1000);
+
+    copyResetTimer = setTimeout(resetCopyButton, 3000);
+  }
+
+  function openManualCopy(message) {
+    const area = document.createElement("textarea");
+    area.value = message;
+    area.readOnly = true;
+    area.style.cssText = [
+      "position:fixed",
+      "inset:16px",
+      "z-index:2147483647",
+      "width:calc(100% - 32px)",
+      "height:45vh",
+      "padding:18px",
+      "border:2px solid #20b15a",
+      "border-radius:18px",
+      "background:#fff",
+      "color:#17150f",
+      "font:600 16px/1.5 Manrope,system-ui,sans-serif",
+      "box-shadow:0 24px 80px rgba(0,0,0,.28)"
+    ].join(";");
+    document.body.appendChild(area);
     area.focus();
     area.select();
     area.setSelectionRange(0, area.value.length);
-
-    let copied = false;
-    try {
-      copied = document.execCommand("copy");
-    } catch (error) {
-      console.error(error);
-    }
-
-    area.remove();
-    return copied;
+    showToast("Не удалось скопировать автоматически — текст выделен. Нажми «Копировать» в меню iPhone.", "error");
+    setTimeout(() => {
+      const remove = () => area.remove();
+      area.addEventListener("blur", remove, { once: true });
+    }, 400);
   }
 
-  async function copyTop10() {
+  function copyTop10() {
     const message = buildTop10Message();
     if (!message) {
       showToast("Пока нет результатов для копирования", "error");
       return;
     }
 
-    let copied = false;
-
-    try {
-      if (navigator.clipboard?.writeText && window.isSecureContext) {
-        await navigator.clipboard.writeText(message);
-        copied = true;
-      }
-    } catch (error) {
-      console.warn("Clipboard API failed, trying fallback", error);
-    }
-
-    if (!copied) copied = legacyCopy(message);
-
-    if (copied) {
-      showToast("ТОП-10 скопирован — можно вставлять в чат ✨");
+    // iPhone/Safari чаще всего разрешает execCommand только пока мы всё ещё
+    // находимся непосредственно внутри клика пользователя. Поэтому пробуем его первым.
+    if (legacyCopy(message)) {
+      showCopySuccess();
       return;
     }
 
-    window.prompt("Скопируй готовое сообщение вручную:", message);
-    showToast("Открыл текст для ручного копирования", "error");
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      navigator.clipboard.writeText(message)
+        .then(() => showCopySuccess())
+        .catch((error) => {
+          console.warn("Clipboard API failed", error);
+          openManualCopy(message);
+        });
+      return;
+    }
+
+    openManualCopy(message);
   }
 
   async function toggleVoting() {
