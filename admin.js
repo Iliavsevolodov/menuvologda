@@ -10,6 +10,7 @@
 
   const hasBackend = Boolean(config.SUPABASE_URL && config.SUPABASE_ANON_KEY && window.supabase);
   const db = hasBackend ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY) : null;
+  let adminPassword = sessionStorage.getItem("menu_admin_password") || "";
   let votingOpen = true;
   let refreshTimer = null;
 
@@ -36,21 +37,20 @@
     window.lucide?.createIcons();
   }
 
-  async function signIn(password) {
+  async function validatePassword(password) {
     if (!db) throw new Error("BACKEND_NOT_CONFIGURED");
-    const { error } = await db.auth.signInWithPassword({
-      email: config.ADMIN_EMAIL,
-      password
-    });
+    const { data, error } = await db.rpc("admin_login", { p_password: password });
     if (error) throw error;
+    if (!data) throw new Error("INVALID_PASSWORD");
+    return true;
   }
 
   async function loadData() {
-    if (!db) return;
+    if (!db || !adminPassword) return;
     try {
       const [{ data: summary, error: summaryError }, { data: results, error: resultsError }] = await Promise.all([
-        db.rpc("admin_summary"),
-        db.rpc("admin_results")
+        db.rpc("admin_summary", { p_password: adminPassword }),
+        db.rpc("admin_results", { p_password: adminPassword })
       ]);
       if (summaryError) throw summaryError;
       if (resultsError) throw resultsError;
@@ -66,10 +66,11 @@
       $("updatedAt").textContent = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
     } catch (error) {
       console.error(error);
-      if (/JWT|session|Unauthorized|ADMIN_ONLY/i.test(error?.message || "")) {
-        await db.auth.signOut();
+      if (/ADMIN_ONLY|INVALID_PASSWORD/i.test(error?.message || "")) {
+        adminPassword = "";
+        sessionStorage.removeItem("menu_admin_password");
         showLogin();
-        showToast("Сессия завершена. Войди снова.", "error");
+        showToast("Нужно войти снова", "error");
       } else {
         showToast("Не удалось обновить результаты", "error");
       }
@@ -118,12 +119,12 @@
   }
 
   async function toggleVoting() {
-    if (!db) return;
+    if (!db || !adminPassword) return;
     const button = $("toggleVoting");
     button.disabled = true;
     try {
       const nextState = !votingOpen;
-      const { error } = await db.rpc("set_voting_state", { p_is_open: nextState });
+      const { error } = await db.rpc("set_voting_state", { p_password: adminPassword, p_is_open: nextState });
       if (error) throw error;
       votingOpen = nextState;
       updateStatus();
@@ -142,7 +143,10 @@
     loginButton.disabled = true;
     loginButton.querySelector("span").textContent = "Проверяем…";
     try {
-      await signIn(passwordInput.value);
+      const password = passwordInput.value;
+      await validatePassword(password);
+      adminPassword = password;
+      sessionStorage.setItem("menu_admin_password", password);
       passwordInput.value = "";
       showDashboard();
     } catch (error) {
@@ -157,8 +161,9 @@
     }
   });
 
-  $("logoutButton").addEventListener("click", async () => {
-    await db?.auth.signOut();
+  $("logoutButton").addEventListener("click", () => {
+    adminPassword = "";
+    sessionStorage.removeItem("menu_admin_password");
     showLogin();
   });
   $("refreshResults").addEventListener("click", loadData);
@@ -166,13 +171,18 @@
 
   async function init() {
     window.lucide?.createIcons();
-    if (!db) {
+    if (!db || !adminPassword) {
       showLogin();
       return;
     }
-    const { data } = await db.auth.getSession();
-    if (data?.session) showDashboard();
-    else showLogin();
+    try {
+      await validatePassword(adminPassword);
+      showDashboard();
+    } catch {
+      adminPassword = "";
+      sessionStorage.removeItem("menu_admin_password");
+      showLogin();
+    }
   }
 
   init();
