@@ -116,30 +116,28 @@
   }
 
   async function submitVote() {
-    if (!selected.size || selected.size > MAX) return;
+    if (!db || !selected.size || selected.size > MAX) return;
     const choices = selectedNames();
     submitButton.disabled = true;
     submitButton.querySelector("span").textContent = "Отправляем…";
 
     try {
-      if (db) {
-        const { error } = await db.rpc("submit_vote", {
-          p_device_id: getDeviceId(),
-          p_selections: choices
-        });
-        if (error) {
-          const message = `${error.message || ""} ${error.details || ""}`;
-          if (message.includes("ALREADY_VOTED") || message.includes("duplicate")) {
-            markVoted(choices);
-            showFinal(choices);
-            return;
-          }
-          if (message.includes("VOTING_CLOSED")) {
-            showOnly(closedView);
-            return;
-          }
-          throw error;
+      const { error } = await db.rpc("submit_vote", {
+        p_device_id: getDeviceId(),
+        p_selections: choices
+      });
+      if (error) {
+        const message = `${error.message || ""} ${error.details || ""}`;
+        if (message.includes("ALREADY_VOTED") || message.includes("duplicate")) {
+          markVoted(choices);
+          showFinal(choices);
+          return;
         }
+        if (message.includes("VOTING_CLOSED")) {
+          showOnly(closedView);
+          return;
+        }
+        throw error;
       }
 
       markVoted(choices);
@@ -157,9 +155,9 @@
     const container = $("finalSelections");
     if (choices.length) {
       container.innerHTML = choices.map((name) => `<span>${escapeHtml(name)}</span>`).join("");
-      $("finalSelections").closest(".final-section").classList.remove("hidden");
+      container.closest(".final-section").classList.remove("hidden");
     } else {
-      $("finalSelections").closest(".final-section").classList.add("hidden");
+      container.closest(".final-section").classList.add("hidden");
     }
     startCountdown();
     requestAnimationFrame(() => launchConfetti());
@@ -195,14 +193,12 @@
   }
 
   async function getPublicState() {
-    if (!db) return { is_open: true };
     const { data, error } = await db.rpc("public_status");
     if (error) throw error;
     return data || { is_open: true };
   }
 
   async function remotelyVoted() {
-    if (!db) return false;
     const { data, error } = await db.rpc("has_voted", { p_device_id: getDeviceId() });
     if (error) return false;
     return Boolean(data);
@@ -212,6 +208,12 @@
     renderSnacks();
     updateCounter();
     window.lucide?.createIcons();
+
+    if (!db) {
+      $("errorText").textContent = "Голосование ещё настраивается. Загляни сюда чуть позже.";
+      showOnly(errorView);
+      return;
+    }
 
     if (isLocallyVoted()) {
       showFinal(savedSelection());
