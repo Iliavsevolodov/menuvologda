@@ -1,0 +1,77 @@
+#copyTop10.copied {
+  background: linear-gradient(135deg, #20b15a, #159447);
+  color: #fff;
+  border-color: rgba(16, 124, 61, .24);
+  box-shadow: 0 12px 28px rgba(32, 177, 90, .24);
+  transform: translateY(-1px);
+}
+
+#copyTop10.copied:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.copy-check {
+  width: 19px;
+  height: 19px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.copy-timer {
+  position: relative;
+  width: 27px;
+  height: 27px;
+  display: inline-grid;
+  place-items: center;
+  margin-left: 2px;
+}
+
+.copy-timer svg {
+  position: absolute;
+  inset: 0;
+  width: 27px;
+  height: 27px;
+  transform: rotate(-90deg);
+}
+
+.copy-timer circle {
+  fill: none;
+  stroke-width: 2.4;
+}
+
+.copy-timer-track {
+  stroke: rgba(255,255,255,.26);
+}
+
+.copy-timer-progress {
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-dasharray: 69.115;
+  stroke-dashoffset: 0;
+  animation: copyRingCountdown 3s linear forwards;
+}
+
+.copy-seconds {
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  font-family: "Manrope", sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+@keyframes copyRingCountdown {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 69.115; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copy-timer-progress { animation-duration: 3s !important; }
+}
