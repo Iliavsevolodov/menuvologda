@@ -145,6 +145,60 @@ begin
 end;
 $$;
 
+create or replace function public.admin_analytics(p_password text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_participants bigint;
+  v_min integer;
+  v_max integer;
+  v_median numeric;
+  v_full_ten bigint;
+  v_below_ten bigint;
+  v_distribution jsonb;
+  v_first timestamptz;
+  v_latest timestamptz;
+begin
+  if not public.check_admin_password(p_password) then raise exception 'ADMIN_ONLY'; end if;
+
+  select
+    count(*),
+    min(cardinality(selections)),
+    max(cardinality(selections)),
+    percentile_cont(0.5) within group (order by cardinality(selections)),
+    count(*) filter (where cardinality(selections)=10),
+    count(*) filter (where cardinality(selections)<10),
+    min(created_at),
+    max(created_at)
+  into v_participants,v_min,v_max,v_median,v_full_ten,v_below_ten,v_first,v_latest
+  from public.ballots;
+
+  select coalesce(jsonb_object_agg(selection_count::text,votes_count order by selection_count),'{}'::jsonb)
+  into v_distribution
+  from (
+    select cardinality(selections) selection_count,count(*)::bigint votes_count
+    from public.ballots
+    group by cardinality(selections)
+  ) d;
+
+  return jsonb_build_object(
+    'participants',coalesce(v_participants,0),
+    'min_selections',coalesce(v_min,0),
+    'max_selections',coalesce(v_max,0),
+    'median_selections',coalesce(v_median,0),
+    'full_ten_count',coalesce(v_full_ten,0),
+    'below_ten_count',coalesce(v_below_ten,0),
+    'selection_distribution',v_distribution,
+    'first_vote_at',v_first,
+    'latest_vote_at',v_latest
+  );
+end;
+$$;
+
 create or replace function public.set_voting_state(p_password text,p_is_open boolean)
 returns boolean language plpgsql security definer set search_path = public as $$
 begin
@@ -161,6 +215,7 @@ revoke all on function public.has_voted(text) from public;
 revoke all on function public.submit_vote(text,text[]) from public;
 revoke all on function public.admin_summary(text) from public;
 revoke all on function public.admin_results(text) from public;
+revoke all on function public.admin_analytics(text) from public;
 revoke all on function public.set_voting_state(text,boolean) from public;
 
 grant execute on function public.public_status() to anon,authenticated;
@@ -169,4 +224,5 @@ grant execute on function public.submit_vote(text,text[]) to anon,authenticated;
 grant execute on function public.admin_login(text) to anon,authenticated;
 grant execute on function public.admin_summary(text) to anon,authenticated;
 grant execute on function public.admin_results(text) to anon,authenticated;
+grant execute on function public.admin_analytics(text) to anon,authenticated;
 grant execute on function public.set_voting_state(text,boolean) to anon,authenticated;
