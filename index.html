@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="description" content="Голосование за закуски для корпоратива в Вологде" />
+  <title>Меню корпоратива — голосование</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="noise"></div>
+  </div>
+
+  <main class="app-shell">
+    <section id="quizView" class="view quiz-view">
+      <header class="hero reveal">
+        <div class="eyebrow"><i data-lucide="sparkles"></i><span>Корпоратив · Вологда</span></div>
+        <h1>Собираем меню <span>вместе</span></h1>
+        <p class="hero-copy">Выбери до <strong>10 закусок</strong>, которые ты действительно хочешь увидеть на нашем столе.</p>
+      </header>
+
+      <div class="selection-toolbar reveal" id="selectionToolbar">
+        <div>
+          <span class="toolbar-label">Твой выбор</span>
+          <strong><span id="selectedCount">0</span><span class="muted"> / 10</span></strong>
+        </div>
+        <div class="mini-progress" aria-hidden="true"><span id="miniProgress"></span></div>
+      </div>
+
+      <section class="snacks-grid" id="snacksGrid" aria-label="Список закусок"></section>
+
+      <footer class="vote-footer reveal">
+        <div class="vote-footer-copy">
+          <span>Можно выбрать от 1 до 10 вариантов</span>
+          <small>После подтверждения изменить голос нельзя</small>
+        </div>
+        <button id="submitVote" class="primary-button" type="button" disabled>
+          <span>Проголосовать</span>
+          <i data-lucide="arrow-up-right"></i>
+        </button>
+      </footer>
+    </section>
+
+    <section id="finalView" class="view final-view hidden" aria-live="polite">
+      <div class="final-card">
+        <div class="celebration-icon" aria-hidden="true">
+          <div class="glass glass-left">🥂</div>
+          <div class="glow-ring"></div>
+        </div>
+        <div class="eyebrow center"><i data-lucide="party-popper"></i><span>Голос принят</span></div>
+        <h2>Спасибо за участие!</h2>
+        <p class="final-copy">Меню становится вкуснее благодаря твоему выбору. Уже очень ждём нашу встречу на корпоративе ✨</p>
+
+        <div class="final-section">
+          <span class="section-kicker">Ты выбрал</span>
+          <div id="finalSelections" class="selected-chips"></div>
+        </div>
+
+        <div class="countdown-panel">
+          <div class="countdown-head">
+            <div>
+              <span class="section-kicker">До встречи</span>
+              <h3>10 октября · 17:00</h3>
+            </div>
+            <i data-lucide="clock-3"></i>
+          </div>
+          <div class="countdown" id="countdown">
+            <div class="countdown-unit"><strong id="days">00</strong><span>дней</span></div>
+            <div class="countdown-unit"><strong id="hours">00</strong><span>часов</span></div>
+            <div class="countdown-unit"><strong id="minutes">00</strong><span>минут</span></div>
+            <div class="countdown-unit"><strong id="seconds">00</strong><span>секунд</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="closedView" class="view state-view hidden">
+      <div class="state-card">
+        <div class="state-icon"><i data-lucide="lock-keyhole"></i></div>
+        <div class="eyebrow center"><span>Голосование завершено</span></div>
+        <h2>Меню уже собирается</h2>
+        <p>Спасибо всем, кто успел проголосовать. Теперь осталось самое приятное — встретиться на корпоративе 🥂</p>
+      </div>
+    </section>
+
+    <section id="errorView" class="view state-view hidden">
+      <div class="state-card">
+        <div class="state-icon"><i data-lucide="wifi-off"></i></div>
+        <h2>Не удалось загрузить голосование</h2>
+        <p id="errorText">Проверь подключение к интернету и попробуй обновить страницу.</p>
+        <button class="secondary-button" onclick="location.reload()"><i data-lucide="refresh-cw"></i><span>Обновить</span></button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="./config.js"></script>
+  <script src="./snacks.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
