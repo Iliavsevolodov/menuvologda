@@ -19,7 +19,7 @@
     toast.textContent = message;
     toast.className = `toast show ${type}`.trim();
     clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => { toast.className = "toast"; }, 2400);
+    showToast.timer = setTimeout(() => { toast.className = "toast"; }, 2600);
   }
 
   function showDashboard() {
@@ -121,7 +121,7 @@
   }
 
   function escapeHtml(value) {
-    return String(value).replace(/[&<>'"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+    return String(value).replace(/[&<>'\"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'\"':"&quot;"}[char]));
   }
 
   function formatVotes(count) {
@@ -151,6 +151,32 @@
     ].join("\n");
   }
 
+  function legacyCopy(text) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.top = "0";
+    area.style.left = "-9999px";
+    area.style.fontSize = "16px";
+    area.style.opacity = "1";
+    document.body.appendChild(area);
+
+    area.focus();
+    area.select();
+    area.setSelectionRange(0, area.value.length);
+
+    let copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } catch (error) {
+      console.error(error);
+    }
+
+    area.remove();
+    return copied;
+  }
+
   async function copyTop10() {
     const message = buildTop10Message();
     if (!message) {
@@ -158,25 +184,26 @@
       return;
     }
 
+    let copied = false;
+
     try {
-      if (navigator.clipboard?.writeText) {
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
         await navigator.clipboard.writeText(message);
-      } else {
-        const area = document.createElement("textarea");
-        area.value = message;
-        area.style.position = "fixed";
-        area.style.opacity = "0";
-        document.body.appendChild(area);
-        area.focus();
-        area.select();
-        document.execCommand("copy");
-        area.remove();
+        copied = true;
       }
-      showToast("ТОП-10 скопирован — можно отправлять в чат ✨");
     } catch (error) {
-      console.error(error);
-      showToast("Не удалось скопировать сообщение", "error");
+      console.warn("Clipboard API failed, trying fallback", error);
     }
+
+    if (!copied) copied = legacyCopy(message);
+
+    if (copied) {
+      showToast("ТОП-10 скопирован — можно вставлять в чат ✨");
+      return;
+    }
+
+    window.prompt("Скопируй готовое сообщение вручную:", message);
+    showToast("Открыл текст для ручного копирования", "error");
   }
 
   async function toggleVoting() {
